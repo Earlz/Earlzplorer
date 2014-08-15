@@ -16,6 +16,10 @@ namespace Bitnet.Client
 {
     public class BitnetClient
     {
+        public static BitnetClient Current
+        {
+            get;set;
+        }
         public BitnetClient()
         { 
         }
@@ -61,14 +65,23 @@ namespace Bitnet.Client
             using (Stream dataStream = webRequest.GetRequestStream()) {
                 dataStream.Write(byteArray, 0, byteArray.Length);
             }
-
-            using (WebResponse webResponse = webRequest.GetResponse()) {
-                using (Stream str = webResponse.GetResponseStream()) {
-                    using (StreamReader sr = new StreamReader(str)) {
-                        return JsonConvert.DeserializeObject<JObject>(sr.ReadToEnd());
+            string content="";
+            try
+            {
+                using (WebResponse webResponse = webRequest.GetResponse()) {
+                    using (Stream str = webResponse.GetResponseStream()) {
+                        using (StreamReader sr = new StreamReader(str)) {
+                            content=sr.ReadToEnd();
+                        }
                     }
                 }
             }
+            catch (WebException wex)
+            {
+                content = new StreamReader(wex.Response.GetResponseStream())
+                    .ReadToEnd();
+            }
+            return JsonConvert.DeserializeObject<JObject>(content);
         }
 
         public void BackupWallet(string a_destination)
