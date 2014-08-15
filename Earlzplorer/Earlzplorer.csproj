@@ -6,7 +6,7 @@
     <ProjectGuid>{FBCB6E2D-F7A4-407C-BD77-41276E68BB1B}</ProjectGuid>
     <OutputType>Exe</OutputType>
     <RootNamespace>Earlz.Earlzplorer</RootNamespace>
-    <AssemblyName>Earlzplorer</AssemblyName>
+    <AssemblyName>earlzplorer</AssemblyName>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">
     <DebugSymbols>true</DebugSymbols>
@@ -39,6 +39,8 @@
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="BitNetClient.cs" />
+    <Compile Include="ArgumentHandler.cs" />
+    <Compile Include="Commands.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
 </Project>
