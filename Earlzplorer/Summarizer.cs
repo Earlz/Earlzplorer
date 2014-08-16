@@ -112,7 +112,7 @@ namespace Earlz.Earlzplorer
                         txout+=vout["value"].ToObject<decimal>();
                         if(coinbase)
                         {
-                            reward+=txout-0.1M;
+                            reward+=txout;
                         }
 
                     }
