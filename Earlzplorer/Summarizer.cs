@@ -77,8 +77,8 @@ namespace Earlz.Earlzplorer
                 s.Time=info["time"].ToObject<long>().AsUnixTimestamp().ToUniversalTime().ToString("MM/dd/yyyy HH:mm:ss");
                 s.Difficulty=info["difficulty"].ToObject<decimal>();
                 //tallies
-                decimal fees;
-                decimal reward;
+                decimal fees=0M;
+                decimal reward=0M;
                 decimal valuein=0M;
                 decimal valueout=0M;
                 //info about the genesis transaction is difficult to get at
@@ -94,24 +94,45 @@ namespace Earlz.Earlzplorer
                     {
                         throw new NotSupportedException("apparently doesn't support getrawtransaction. such shitcoin");
                     }
+                    bool coinbase=false;
+                    decimal txin=0M;
+                    decimal txout=0M;
                     foreach(var vin in txcode["vin"])
                     {
                         if(vin["coinbase"] != null)
                         {
+                            coinbase=true;
                             //mined
                             continue;
                         }
-
-                        valuein+=GetValueOut(vin["txid"].ToString(), vin["vout"].ToObject<int>());
+                        txin+=GetValueOut(vin["txid"].ToString(), vin["vout"].ToObject<int>());
                     }
                     foreach(var vout in txcode["vout"])
                     {
-                        valueout+=vout["value"].ToObject<decimal>();
+                        txout+=vout["value"].ToObject<decimal>();
+                        if(coinbase)
+                        {
+                            reward+=txout-0.1M;
+                        }
+
+                    }
+                    if(!coinbase)
+                    {
+                        decimal txfees=txin-txout;
+                        if(txfees<0)
+                        {
+                            throw new ApplicationException("This transaction appears to have negative fees. This could mean the network has an exploit, or that this code can't handle some portion of it");
+                        }
+                        fees=txfees;
                     }
                     s.TxCount++;
+                    valuein+=txin;
+                    valueout+=txout;
                 }
                 s.ValueIn=valuein;
                 s.ValueOut=valueout;
+                s.Fees=fees;
+                s.Reward=reward-fees;
                 WriteSummaryLine(s);
             }
         }

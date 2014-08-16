@@ -59,7 +59,7 @@ note: The best time can be had by redirecting output to a file, and then using a
                 break;
             case "dumpblockwithtx":
                 num=int.Parse(args[3]);
-                s.DumpBlocksWithTx(num, num);
+                s.DumpBlocksWithTx(num, num+1);
                 break;
             default: 
                 Console.WriteLine("Unknown command");
