@@ -10,6 +10,7 @@ using System.IO;
 
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using System.Text.RegularExpressions;
 
 
 namespace Bitnet.Client
@@ -81,8 +82,21 @@ namespace Bitnet.Client
                 content = new StreamReader(wex.Response.GetResponseStream())
                     .ReadToEnd();
             }
-            //content=@"{""result"":{""hex"":""01000000b040ef53010000000000000000000000000000000000000000000000000000000000000000ffffffff0602e80302b003ffffffff0140420f00000000001976a914dfb321ee5756abd8f9def47efec22c7fe77ff10188ac00000000"",""txid"":""eeb6e100d484fb473b0f0306320d6e8f8e6467c99da58e4260fa1ccfd4ed41c1"",""version"":1,""time"":1408188592,""locktime"":0,""vin"":[{""coinbase"":""02e80302b003"",""sequence"":4294967295}],""vout"":[{""value"":0.01000000,""n"":0,""scriptPubKey"":{""asm"":""OP_DUP OP_HASH160 dfb321ee5756abd8f9def47efec22c7fe77ff101 OP_EQUALVERIFY OP_CHECKSIG"",""reqSigs"":1,""type"":""pubkeyhash"",""addresses"":[""DRXupPDjiUFJNW8drjxSJmMswHah7bgenm""]}}],""blockhash"":""0000000002341749f9a81e10b6c645f19c347cf85bbfc94d5443b83f4e511f43"",""confirmations"":846,""time"":1408188593,""blocktime"":1408188593},""error"":null,""id"":""1""}";
+            try
+            {
             return JsonConvert.DeserializeObject<JObject>(content);
+            }
+            catch(Exception e)
+            {
+                //some shit coins have a duplicate time field in their json
+                var matches=Regex.Matches(content, "\\\"time\\\":[\\d]*,");
+                if(matches.Count!=2)
+                {
+                    throw;
+                }
+                content = content.Replace(matches[1].Value, "");
+                return JsonConvert.DeserializeObject<JObject>(content);
+            }
         }
 
         public void BackupWallet(string a_destination)
