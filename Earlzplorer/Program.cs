@@ -29,6 +29,7 @@ note: The best time can be had by redirecting output to a file, and then using a
             var config=File.ReadAllLines(args[0]);
             string username=null;
             string password=null;
+            int? port=0;
             foreach(var eachline in config)
             {
                 var line=eachline;
@@ -41,9 +42,17 @@ note: The best time can be had by redirecting output to a file, and then using a
                 {
                     password=line.Substring("rpcpassword=".Length);
                 }
-            }
+                if(line.StartsWith("rpcport="))
+                {
+                    port=int.Parse(line.Substring("rpcport=".Length));
+                }
 
-            var bc=new BitnetClient("http://127.0.0.1:"+args[1], username, password);
+            }
+            if(!port.HasValue)
+            {
+                port=int.Parse(args[1]);
+            }
+            var bc=new BitnetClient("http://127.0.0.1:"+port.Value, username, password);
             var s=new Summarizer(bc);
             Range r;
             int num;
