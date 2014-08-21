@@ -111,11 +111,12 @@ namespace Earlz.Earlzplorer
                     }
                     foreach(var vout in txcode["vout"])
                     {
-                        txout+=vout["value"].ToObject<decimal>();
+                        decimal tmp=vout["value"].ToObject<decimal>();
                         if(coinbase)
                         {
-                            reward+=txout;
+                            reward+=tmp;
                         }
+                        txout+=tmp;
 
                     }
                     if(!coinbase)
