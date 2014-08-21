@@ -51,17 +51,18 @@ namespace Earlz.Earlzplorer
             public decimal Reward;
             public decimal Fees;
             public decimal Version;
+            public string Type="PoW";
         }
         string[] BlockSummaryDesc={
             "BlockNum", "Time", "Difficulty", "TxCount", "ValueIn", "ValueOut", 
-            "Reward", "Fees", "Version"};
+            "Reward", "Fees", "Version", "Type"};
         void OutputColumns()
         {
-            Console.WriteLine("{0,-10} {1,-20} {2,-10} {3,-10} {4,-10} {5,-10} {6,-10} {7,-10} {8,-10}", BlockSummaryDesc);
+            Console.WriteLine("{0,-10} {1,-20} {2,-15} {3,-10} {4,-20} {5,-20} {6,-20} {7,-20} {8,-10} {9,-6}", BlockSummaryDesc);
         }
         void WriteSummaryLine(BlockSummary s)
         {
-            Console.WriteLine("{0,-10} {1,-20} {2,-10} {3,-10} {4,-10} {5,-10} {6,-10} {7,-10} {8,-10}", s.BlockNum, s.Time, s.Difficulty, s.TxCount, s.ValueIn, s.ValueOut, s.Reward, s.Fees, s.Version);
+            Console.WriteLine("{0,-10} {1,-20} {2,-15} {3,-10} {4,-20} {5,-20} {6,-20} {7,-20} {8,-10} {9,-6}", s.BlockNum, s.Time, s.Difficulty, s.TxCount, s.ValueIn, s.ValueOut, s.Reward, s.Fees, s.Version, s.Type);
         }
         public void SummarizeBlocks(int begin, int end)
         {
@@ -87,6 +88,7 @@ namespace Earlz.Earlzplorer
                     WriteSummaryLine(s);
                     continue;
                 }
+                int txn=0;
                 foreach(var t in info["tx"])
                 {
                     var txcode=Bit.InvokeMethod("getrawtransaction", t, 1)["result"];
@@ -121,13 +123,27 @@ namespace Earlz.Earlzplorer
                         decimal txfees=txin-txout;
                         if(txfees<0)
                         {
-                            throw new ApplicationException("This transaction appears to have negative fees. This could mean the network has an exploit, or that this code can't handle some portion of it");
+                            if(txn==1 && 
+                                decimal.Parse(txcode["vout"][0]["value"].ToString())==0M &&
+                                txcode["vout"][0]["scriptPubKey"]["asm"].ToString()=="" &&
+                                reward==0)
+                            {
+                                //PoS reward
+                                reward+=-txfees;
+                                txfees=0;
+                                s.Type="PoS";
+                            }
+                            else
+                            {
+                                throw new ApplicationException("This transaction appears to have negative fees. This could mean the network has an exploit, or that this code can't handle some portion of it");
+                            }
                         }
                         fees=txfees;
                     }
                     s.TxCount++;
                     valuein+=txin;
                     valueout+=txout;
+                    txn++;
                 }
                 s.ValueIn=valuein;
                 s.ValueOut=valueout;
