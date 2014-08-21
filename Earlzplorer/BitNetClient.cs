@@ -35,11 +35,7 @@ namespace Bitnet.Client
 
         public ICredentials Credentials;
 
-        public JObject InvokeMethod_retry(string a_sMethod, params object[] a_params)
-        {
-
-        }
-        public JObject InvokeMethod_retry(string a_sMethod, params object[] a_params)
+        public JObject InvokeMethod(string a_sMethod, params object[] a_params)
         {
             HttpWebRequest webRequest = (HttpWebRequest)WebRequest.Create(Url);
             webRequest.Credentials = Credentials;
@@ -67,51 +63,39 @@ namespace Bitnet.Client
             byte[] byteArray = Encoding.UTF8.GetBytes(s);
             webRequest.ContentLength = byteArray.Length;
 
+            using (Stream dataStream = webRequest.GetRequestStream()) {
+                dataStream.Write(byteArray, 0, byteArray.Length);
+            }
+            string content="";
             try
             {
-                using (Stream dataStream = webRequest.GetRequestStream()) {
-                    dataStream.Write(byteArray, 0, byteArray.Length);
-                }
-                string content="";
-                try
-                {
-                    using (WebResponse webResponse = webRequest.GetResponse()) {
-                        using (Stream str = webResponse.GetResponseStream()) {
-                            using (StreamReader sr = new StreamReader(str)) {
-                                content=sr.ReadToEnd();
-                            }
+                using (WebResponse webResponse = webRequest.GetResponse()) {
+                    using (Stream str = webResponse.GetResponseStream()) {
+                        using (StreamReader sr = new StreamReader(str)) {
+                            content=sr.ReadToEnd();
                         }
                     }
                 }
-                catch (WebException wex)
-                {
-                    content = new StreamReader(wex.Response.GetResponseStream())
-                        .ReadToEnd();
-                }
-                try
-                {
-                return JsonConvert.DeserializeObject<JObject>(content);
-                }
-                catch(Exception e)
-                {
-                    //some shit coins have a duplicate time field in their json
-                    var matches=Regex.Matches(content, "\\\"time\\\":[\\d]*,");
-                    if(matches.Count!=2)
-                    {
-                        throw;
-                    }
-                    content = content.Replace(matches[1].Value, "");
-                    return JsonConvert.DeserializeObject<JObject>(content);
-                }
             }
-            catch(ObjectDisposedException)
+            catch (WebException wex)
             {
-                //some shitcoins close the connection early randomly
-                if(retryonce)
+                content = new StreamReader(wex.Response.GetResponseStream())
+                    .ReadToEnd();
+            }
+            try
+            {
+            return JsonConvert.DeserializeObject<JObject>(content);
+            }
+            catch(Exception e)
+            {
+                //some shit coins have a duplicate time field in their json
+                var matches=Regex.Matches(content, "\\\"time\\\":[\\d]*,");
+                if(matches.Count!=2)
                 {
-                    return InvokeMethod(a_sMethod, a_params, false);
+                    throw;
                 }
-                throw;
+                content = content.Replace(matches[1].Value, "");
+                return JsonConvert.DeserializeObject<JObject>(content);
             }
         }
 
