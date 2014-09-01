@@ -29,7 +29,7 @@ note: The best time can be had by redirecting output to a file, and then using a
             var config=File.ReadAllLines(args[0]);
             string username=null;
             string password=null;
-            int? port=0;
+            int? port=null;
             foreach(var eachline in config)
             {
                 var line=eachline;

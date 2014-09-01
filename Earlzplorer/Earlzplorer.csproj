@@ -18,7 +18,7 @@
     <WarningLevel>4</WarningLevel>
     <Externalconsole>true</Externalconsole>
     <PlatformTarget>x86</PlatformTarget>
-    <Commandlineparameters>~/.shadowcoin/shadowcoin.conf 1 summarizeblocks 900-1000</Commandlineparameters>
+    <Commandlineparameters>~/.fractalcoin/fractalcoin.conf 33111 summarizeblocks 1-1000</Commandlineparameters>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x86' ">
     <DebugType>full</DebugType>

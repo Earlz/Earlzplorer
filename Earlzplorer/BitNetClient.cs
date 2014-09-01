@@ -28,21 +28,17 @@ namespace Bitnet.Client
         public BitnetClient(string a_sUri, string user, string pass)
         {
             Url = new Uri(a_sUri);
-            Credentials=new NetworkCredential(user, pass);
+            Username=user;
+            Password=pass;
         }
 
         public Uri Url;
-
-        public ICredentials Credentials;
+        string Username;
+        string Password;
+        string AuthInfo;
 
         public JObject InvokeMethod(string a_sMethod, params object[] a_params)
         {
-            HttpWebRequest webRequest = (HttpWebRequest)WebRequest.Create(Url);
-            webRequest.Credentials = Credentials;
-
-            webRequest.ContentType = "application/json-rpc";
-            webRequest.Method = "POST";
-
             JObject joe = new JObject();
             joe["jsonrpc"] = "1.0";
             joe["id"] = "1";
@@ -59,32 +55,23 @@ namespace Bitnet.Client
             }
 
             string s = JsonConvert.SerializeObject(joe);
-            // serialize json for the request
-            byte[] byteArray = Encoding.UTF8.GetBytes(s);
-            webRequest.ContentLength = byteArray.Length;
-
-            using (Stream dataStream = webRequest.GetRequestStream()) {
-                dataStream.Write(byteArray, 0, byteArray.Length);
-            }
-            string content="";
-            try
+            string content=null;
+            if(AuthInfo==null)
             {
-                using (WebResponse webResponse = webRequest.GetResponse()) {
-                    using (Stream str = webResponse.GetResponseStream()) {
-                        using (StreamReader sr = new StreamReader(str)) {
-                            content=sr.ReadToEnd();
-                        }
-                    }
-                }
+                AuthInfo = Username + ":" + Password;
+                AuthInfo = Convert.ToBase64String(Encoding.Default.GetBytes(AuthInfo));
             }
-            catch (WebException wex)
+            using (var client = new WebClient())
             {
-                content = new StreamReader(wex.Response.GetResponseStream())
-                    .ReadToEnd();
+                client.UseDefaultCredentials=false;
+                //inject authorization, otherwise it will do an extra request to "discover" the authorization method needed. We already know it's basic
+                client.Headers[HttpRequestHeader.Authorization] = string.Format("Basic {0}", AuthInfo);
+                client.Headers["Content-Type"] = "application/json-rpc";
+                content = client.UploadString(Url, s);
             }
             try
             {
-            return JsonConvert.DeserializeObject<JObject>(content);
+                return JsonConvert.DeserializeObject<JObject>(content);
             }
             catch(Exception e)
             {
