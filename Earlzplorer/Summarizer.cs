@@ -67,7 +67,7 @@ namespace Earlz.Earlzplorer
         }
         void WriteSummaryLine(BlockSummary s)
         {
-            Console.WriteLine("{0,-10} {1,-20} {2,-15} {3,-10} {4,-20} {5,-20} {6,-20} {7,-20} {8,-10} {9,-6} {10,-10}", s.BlockNum, s.Time, s.Difficulty, s.TxCount, s.ValueIn, s.ValueOut, s.Reward, s.Fees, s.Version, s.Type);
+            Console.WriteLine("{0,-10} {1,-20} {2,-15} {3,-10} {4,-20} {5,-20} {6,-20} {7,-20} {8,-10} {9,-6} {10,-10}", s.BlockNum, s.Time, s.Difficulty, s.TxCount, s.ValueIn, s.ValueOut, s.Reward, s.Fees, s.Version, s.Type, s.AddressHash);
         }
         public void SummarizeBlocks(int begin, int end)
         {
