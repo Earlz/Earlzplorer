@@ -1,5 +1,9 @@
 ﻿using System;
 using Bitnet.Client;
+using System.Collections.Generic;
+using System.Linq;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace Earlz.Earlzplorer
 {
@@ -52,17 +56,18 @@ namespace Earlz.Earlzplorer
             public decimal Fees;
             public decimal Version;
             public string Type="PoW";
+            public string AddressHash="N/A";
         }
         string[] BlockSummaryDesc={
             "BlockNum", "Time", "Difficulty", "TxCount", "ValueIn", "ValueOut", 
-            "Reward", "Fees", "Version", "Type"};
+            "Reward", "Fees", "Version", "Type", "AddressHash"};
         void OutputColumns()
         {
-            Console.WriteLine("{0,-10} {1,-20} {2,-15} {3,-10} {4,-20} {5,-20} {6,-20} {7,-20} {8,-10} {9,-6}", BlockSummaryDesc);
+            Console.WriteLine("{0,-10} {1,-20} {2,-15} {3,-10} {4,-20} {5,-20} {6,-20} {7,-20} {8,-10} {9,-6} {10,-10}", BlockSummaryDesc);
         }
         void WriteSummaryLine(BlockSummary s)
         {
-            Console.WriteLine("{0,-10} {1,-20} {2,-15} {3,-10} {4,-20} {5,-20} {6,-20} {7,-20} {8,-10} {9,-6}", s.BlockNum, s.Time, s.Difficulty, s.TxCount, s.ValueIn, s.ValueOut, s.Reward, s.Fees, s.Version, s.Type);
+            Console.WriteLine("{0,-10} {1,-20} {2,-15} {3,-10} {4,-20} {5,-20} {6,-20} {7,-20} {8,-10} {9,-6} {10,-10}", s.BlockNum, s.Time, s.Difficulty, s.TxCount, s.ValueIn, s.ValueOut, s.Reward, s.Fees, s.Version, s.Type);
         }
         public void SummarizeBlocks(int begin, int end)
         {
@@ -89,6 +94,7 @@ namespace Earlz.Earlzplorer
                     continue;
                 }
                 int txn=0;
+                List<string> PayoutAddresses=new List<string>(2);
                 foreach(var t in info["tx"])
                 {
                     var txcode=Bit.InvokeMethod("getrawtransaction", t, 1)["result"];
@@ -115,9 +121,16 @@ namespace Earlz.Earlzplorer
                         if(coinbase)
                         {
                             reward+=tmp;
+                            var pubkey=vout["scriptPubKey"];
+                            if(pubkey!=null)
+                            {
+                                foreach(var address in pubkey["addresses"])
+                                {
+                                    PayoutAddresses.Add(address.ToString());
+                                }
+                            }
                         }
                         txout+=tmp;
-
                     }
                     if(!coinbase)
                     {
@@ -146,6 +159,16 @@ namespace Earlz.Earlzplorer
                     valueout+=txout;
                     txn++;
                 }
+
+                //this is by no means meant to be exact or secure. It is only for eye balling where rewards go for blocks and what pool it's going to
+                string payouts=""; //ugh not possible with linq?!
+                foreach(var addr in PayoutAddresses)
+                {
+                    payouts+=addr;
+                }
+                var hasher = new RIPEMD160Managed();
+                s.AddressHash=BitConverter.ToString(hasher.ComputeHash(Encoding.ASCII.GetBytes(payouts))).Replace("-","").ToLower().Substring(0,6);
+                
                 s.ValueIn=valuein;
                 s.ValueOut=valueout;
                 s.Fees=fees;
