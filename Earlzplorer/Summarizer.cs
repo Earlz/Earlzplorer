@@ -122,7 +122,7 @@ namespace Earlz.Earlzplorer
                         {
                             reward+=tmp;
                             var pubkey=vout["scriptPubKey"];
-                            if(pubkey!=null)
+                            if(pubkey!=null && pubkey["addresses"]!=null)
                             {
                                 foreach(var address in pubkey["addresses"])
                                 {
