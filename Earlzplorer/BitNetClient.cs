@@ -17,6 +17,7 @@ namespace Bitnet.Client
 {
     public class BitnetClient
     {
+        const int RETRY_AMOUNT = 3;
         public static BitnetClient Current
         {
             get;set;
@@ -38,6 +39,26 @@ namespace Bitnet.Client
         string AuthInfo;
 
         public JObject InvokeMethod(string a_sMethod, params object[] a_params)
+        {
+            for (int retries = 1; retries <= RETRY_AMOUNT; retries++)
+            {
+                try
+                {
+                    return InvokeMethodRaw(a_sMethod, a_params);
+                }
+                catch (Exception e)
+                {
+                    if (retries >= RETRY_AMOUNT)
+                    {
+                        //if it's the last execution..
+                        throw;
+                    }
+                    //else swallow the exception
+                }
+            }
+            throw new Exception("shouldn't get here..");
+        }
+        JObject InvokeMethodRaw(string a_sMethod, object[] a_params)
         {
             JObject joe = new JObject();
             joe["jsonrpc"] = "1.0";
@@ -67,7 +88,32 @@ namespace Bitnet.Client
                 //inject authorization, otherwise it will do an extra request to "discover" the authorization method needed. We already know it's basic
                 client.Headers[HttpRequestHeader.Authorization] = string.Format("Basic {0}", AuthInfo);
                 client.Headers["Content-Type"] = "application/json-rpc";
-                content = client.UploadString(Url, s);
+                try
+                {
+                    content = client.UploadString(Url, s);
+                }
+                catch (WebException e)
+                {
+                    Console.WriteLine("Error executing command {0}", a_sMethod);
+                    string response = null;
+                    if (e.Response != null)
+                    {
+                        var responseStream = e.Response.GetResponseStream();
+
+                        if (responseStream != null)
+                        {
+                            using (var reader = new StreamReader(responseStream))
+                            {
+                                response = reader.ReadToEnd();
+                            }
+                        }
+                    }
+                    if (response != null)
+                    {
+                        Console.WriteLine("Server Error: {0}", response);
+                    }
+                    throw;
+                }
             }
             try
             {
